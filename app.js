@@ -61,12 +61,14 @@ function 更新音乐列表(filteredCollection = musicCollection) {
             <td>
                 <select id="languageSelect-${index}" data-index="${index}">
                     <option value="">请选择</option>
-                    <option value="中文" ${language === '中文' ? 'selected' : ''}>中文</option>
+                    <option value="国语" ${language === '国语' ? 'selected' : ''}>国语</option>
+                    <option value="粤语" ${language === '粤语' ? 'selected' : ''}>粤语</option>
                     <option value="英语" ${language === '英语' ? 'selected' : ''}>英语</option>
-                    <option value="法语" ${language === '法语' ? 'selected' : ''}>法语</option>
-                    <option value="西班牙语" ${language === '西班牙语' ? 'selected' : ''}>西班牙语</option>
                     <option value="日语" ${language === '日语' ? 'selected' : ''}>日语</option>
                     <option value="韩语" ${language === '韩语' ? 'selected' : ''}>韩语</option>
+                    <option value="法语" ${language === '法语' ? 'selected' : ''}>法语</option>
+                    <option value="西班牙语" ${language === '西班牙语' ? 'selected' : ''}>西班牙语</option>
+                    <option value="其他" ${language === '其他' ? 'selected' : ''}>其他</option>
                 </select>
             </td>
             <td><button>删除</button></td>
