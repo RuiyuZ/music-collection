@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的音乐收藏</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9;
+            margin: 20px;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 36px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            width: 300px;
+            margin-right: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        #searchInput {
+            width: 250px;
+        }
+
+        select {
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8f8f8;
+            font-size: 18px;
+        }
+
+        td {
+            font-size: 16px;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #musicForm {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #searchFilter {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>我的音乐收藏</h1>
+
+        <div id="musicForm">
+            <input type="text" id="musicName" placeholder="输入音乐名称">
+            <input type="text" id="singerName" placeholder="输入歌手名称">
+            <button onclick="添加音乐()">添加音乐</button>
+        </div>
+
+        <div id="searchFilter">
+            <input type="text" id="searchInput" onkeyup="搜索音乐()" placeholder="按名称搜索">
+            <select id="filterSelect" onchange="过滤歌手()">
+                <option value="">按歌手筛选</option>
+            </select>
+        </div>
+
+        <table id="musicTable">
+            <thead>
+                <tr>
+                    <th>音乐名称</th>
+                    <th>歌手</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="musicList">
+                <!-- 音乐项目将会动态添加 -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
