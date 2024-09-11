@@ -50,7 +50,12 @@ async function 添加音乐() {
 // Update music list in the UI
 function 更新音乐列表(filteredCollection = musicCollection) {
     const musicList = document.getElementById('musicList');
+    const songCountElement = document.getElementById('songCount');  // Get the song count element
     musicList.innerHTML = '';
+
+    // Update the total song count
+    const totalSongs = filteredCollection.length;
+    songCountElement.textContent = `总共有 ${totalSongs} 首歌曲`;
 
     filteredCollection.forEach((music, index) => {
         const language = music.language ? music.language : "请选择";
@@ -133,16 +138,21 @@ async function 更新风格(index, newGenre) {
     }
 }
 
-// Update singer filter dropdown
+// Update singer filter dropdown with Select2
 function 更新歌手筛选() {
-    const filterSelect = document.getElementById('filterSelect');
-    filterSelect.innerHTML = '<option value="">按歌手筛选</option>';  // Add default "select all" option
+    const filterSelect = $('#filterSelect');
+    filterSelect.empty();  // Clear the existing options
+
+    filterSelect.append(new Option('按歌手筛选', ''));  // Add default "select all" option
 
     const singers = new Set(musicCollection.map(music => music.singerName));  // Get unique singers
     singers.forEach(singer => {
-        const option = `<option value="${singer}">${singer}</option>`;
-        filterSelect.innerHTML += option;
+        const option = new Option(singer, singer);
+        filterSelect.append(option);
     });
+
+    // Refresh the Select2 dropdown
+    filterSelect.trigger('change');
 }
 
 // Delete music from Firebase
@@ -165,7 +175,7 @@ function 搜索音乐() {
 
 // Filter music by singer
 function 过滤歌手() {
-    const selectedSinger = document.getElementById('filterSelect').value;  // Get the selected singer
+    const selectedSinger = $('#filterSelect').val();  // Get the selected singer
     if (!selectedSinger) {
         更新音乐列表();  // If no singer is selected, show all songs
         return;
@@ -200,7 +210,15 @@ function 过滤风格() {
 }
 
 // Fetch the music collection when the page loads
-document.addEventListener('DOMContentLoaded', fetchMusicCollection);
+document.addEventListener('DOMContentLoaded', () => {
+    fetchMusicCollection();
+
+    // Initialize Select2 for the singer filter dropdown
+    $('#filterSelect').select2({
+        placeholder: '按歌手筛选',
+        allowClear: true
+    });
+});
 
 // Attach event listener for "Add Music" button
 document.getElementById('addMusicButton').addEventListener('click', 添加音乐);
@@ -208,10 +226,10 @@ document.getElementById('addMusicButton').addEventListener('click', 添加音乐
 // Attach event listener for "Search by Name"
 document.getElementById('searchInput').addEventListener('input', 搜索音乐);
 
-// Attach event listener for "Filter by Singer" dropdown
-document.getElementById('filterSelect').addEventListener('change', 过滤歌手);
+// Attach event listener for "Filter by Singer" dropdown (with Select2)
+$('#filterSelect').on('change', 过滤歌手);
 
-// Attach event listener for "Filter by Language" dropdown (directly triggered by selection)
+// Attach event listener for "Filter by Language" dropdown
 document.getElementById('languageFilterSelect').addEventListener('change', 过滤语言);
 
 // Attach event listener for "Filter by Genre" dropdown

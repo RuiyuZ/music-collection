@@ -8,10 +8,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <!-- Link to external CSS -->
     <link rel="stylesheet" href="styles.css">
+
+    <!-- Include Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Include jQuery (required by Select2) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Include Select2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 </head>
 <body>
     <div class="container">
         <h1>十万嬉皮的歌单</h1>
+
+        <!-- Total Song Count -->
+        <h3 id="songCount">总共有 0 首歌曲</h3> <!-- This element will display the total number of songs -->
 
         <!-- Add Music Form -->
         <div id="musicForm">
@@ -54,8 +67,8 @@
             <!-- Search by Music Name -->
             <input type="text" id="searchInput" placeholder="按名称搜索" />
 
-            <!-- Filter by Singer Dropdown -->
-            <select id="filterSelect">
+            <!-- Filter by Singer Dropdown with Select2 -->
+            <select id="filterSelect" style="width: 100%;">
                 <option value="">按歌手筛选</option>
                 <!-- This will be dynamically populated by JS -->
             </select>
@@ -110,5 +123,16 @@
 
     <!-- Link to external JavaScript -->
     <script type="module" src="app.js"></script>
+
+    <!-- Initialize Select2 for the singer filter dropdown -->
+    <script>
+        $(document).ready(function() {
+            $('#filterSelect').select2({
+                placeholder: '按歌手筛选',
+                allowClear: true
+            });
+        });
+    </script>
+
 </body>
 </html>
