@@ -26,21 +26,22 @@ async function 添加音乐() {
     const musicName = document.getElementById('musicName').value;
     const singerName = document.getElementById('singerName').value;
     const language = document.getElementById('languageSelect').value;  // Capture the selected language
+    const genre = document.getElementById('genreSelect').value;  // Capture the selected genre (风格)
 
-    if (musicName && singerName && language) {
+    if (musicName && singerName && language && genre) {
         const newMusicRef = push(ref(database, 'musicCollection'));
-        await set(newMusicRef, { musicName, singerName, language });
+        await set(newMusicRef, { musicName, singerName, language, genre });
 
-        // Add new song to the music collection array
-        musicCollection.push({ id: newMusicRef.key, musicName, singerName, language });
+        musicCollection.push({ id: newMusicRef.key, musicName, singerName, language, genre });
 
         // Reset input fields
         document.getElementById('musicName').value = '';
         document.getElementById('singerName').value = '';
         document.getElementById('languageSelect').value = '';
+        document.getElementById('genreSelect').value = '';
 
-        更新音乐列表();  // Update the music list after adding the new song
-        更新歌手筛选();  // Update the singer filter dropdown
+        更新音乐列表();
+        更新歌手筛选();
     } else {
         console.log("All fields are required");
     }
@@ -52,7 +53,8 @@ function 更新音乐列表(filteredCollection = musicCollection) {
     musicList.innerHTML = '';
 
     filteredCollection.forEach((music, index) => {
-        const language = music.language ? music.language : "请选择";  // Default to "请选择" if language is missing
+        const language = music.language ? music.language : "请选择";
+        const genre = music.genre ? music.genre : "请选择";
 
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -71,16 +73,31 @@ function 更新音乐列表(filteredCollection = musicCollection) {
                     <option value="其他" ${language === '其他' ? 'selected' : ''}>其他</option>
                 </select>
             </td>
+            <td>
+                <select id="genreSelect-${index}" data-index="${index}">
+                    <option value="">请选择</option>
+                    <option value="EMO" ${genre === 'EMO' ? 'selected' : ''}>EMO</option>
+                    <option value="流行" ${genre === '流行' ? 'selected' : ''}>流行</option>
+                    <option value="搞怪" ${genre === '搞怪' ? 'selected' : ''}>搞怪</option>
+                    <option value="动漫" ${genre === '动漫' ? 'selected' : ''}>动漫</option>
+                    <option value="戏曲" ${genre === '戏曲' ? 'selected' : ''}>戏曲</option>
+                    <option value="抒情" ${genre === '抒情' ? 'selected' : ''}>抒情</option>
+                    <option value="抒情" ${genre === '剑网三' ? 'selected' : ''}>剑网三</option>
+                </select>
+            </td>
             <td><button>删除</button></td>
         `;
 
-        // Attach the delete event listener
         row.querySelector('button').addEventListener('click', () => 删除音乐(index));
 
-        // Attach change event listener for language dropdown
         row.querySelector(`#languageSelect-${index}`).addEventListener('change', (event) => {
             const selectedLanguage = event.target.value;
             更新语言(index, selectedLanguage);
+        });
+
+        row.querySelector(`#genreSelect-${index}`).addEventListener('change', (event) => {
+            const selectedGenre = event.target.value;
+            更新风格(index, selectedGenre);
         });
 
         musicList.appendChild(row);
@@ -98,6 +115,19 @@ async function 更新语言(index, newLanguage) {
         console.log(`Language for "${music.musicName}" updated to: ${newLanguage}`);
     } catch (error) {
         console.error("Error updating language:", error);
+    }
+}
+
+// Update the genre (风格) of a song in Firebase
+async function 更新风格(index, newGenre) {
+    const music = musicCollection[index];
+    const musicRef = ref(database, `musicCollection/${music.id}`);
+    
+    try {
+        await update(musicRef, { genre: newGenre });
+        musicCollection[index].genre = newGenre;
+    } catch (error) {
+        console.error("Error updating genre:", error);
     }
 }
 
@@ -157,6 +187,16 @@ function 过滤语言() {
     更新音乐列表(filteredMusic);
 }
 
+// Filter music by genre (风格)
+function 过滤风格() {
+    const selectedGenre = document.getElementById('genreFilterSelect').value;
+    const filteredMusic = musicCollection.filter(music => 
+        music.genre === selectedGenre || !selectedGenre
+    );
+
+    更新音乐列表(filteredMusic);
+}
+
 // Fetch the music collection when the page loads
 document.addEventListener('DOMContentLoaded', fetchMusicCollection);
 
@@ -171,3 +211,6 @@ document.getElementById('filterSelect').addEventListener('change', 过滤歌手)
 
 // Attach event listener for "Filter by Language" dropdown (directly triggered by selection)
 document.getElementById('languageFilterSelect').addEventListener('change', 过滤语言);
+
+// Attach event listener for "Filter by Genre" dropdown
+document.getElementById('genreFilterSelect').addEventListener('change', 过滤风格);
