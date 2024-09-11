@@ -82,7 +82,9 @@ function 更新音乐列表(filteredCollection = musicCollection) {
                     <option value="动漫" ${genre === '动漫' ? 'selected' : ''}>动漫</option>
                     <option value="戏曲" ${genre === '戏曲' ? 'selected' : ''}>戏曲</option>
                     <option value="抒情" ${genre === '抒情' ? 'selected' : ''}>抒情</option>
-                    <option value="抒情" ${genre === '剑网三' ? 'selected' : ''}>剑网三</option>
+                    <option value="说唱" ${genre === '说唱' ? 'selected' : ''}>说唱</option>
+                    <option value="古风" ${genre === '古风' ? 'selected' : ''}>古风</option>
+                    <option value="剑网三" ${genre === '剑网三' ? 'selected' : ''}>剑网三</option>
                 </select>
             </td>
             <td><button>删除</button></td>
