@@ -138,27 +138,6 @@ async function 更新风格(index, newGenre) {
     }
 }
 
-// Combined filter function for both language and genre
-function 过滤音乐() {
-    const selectedLanguage = document.getElementById('languageFilterSelect').value;
-    const selectedGenre = document.getElementById('genreFilterSelect').value;
-
-    let filteredMusic = musicCollection;
-
-    // Apply language filter if a language is selected
-    if (selectedLanguage) {
-        filteredMusic = filteredMusic.filter(music => music.language === selectedLanguage);
-    }
-
-    // Apply genre filter if a genre is selected
-    if (selectedGenre) {
-        filteredMusic = filteredMusic.filter(music => music.genre === selectedGenre);
-    }
-
-    // Update the music list with the filtered results
-    更新音乐列表(filteredMusic);
-}
-
 // Update singer filter dropdown with Select2
 function 更新歌手筛选() {
     const filterSelect = $('#filterSelect');
@@ -185,6 +164,51 @@ async function 删除音乐(index) {
     更新歌手筛选();
 }
 
+// Search music by name
+function 搜索音乐() {
+    const searchInput = document.getElementById('searchInput').value.toLowerCase();
+    const filteredMusic = musicCollection.filter(music => 
+        music.musicName.toLowerCase().includes(searchInput)
+    );
+    更新音乐列表(filteredMusic);
+}
+
+// Filter music by singer
+function 过滤歌手() {
+    const selectedSinger = $('#filterSelect').val();  // Get the selected singer
+    if (!selectedSinger) {
+        更新音乐列表();  // If no singer is selected, show all songs
+        return;
+    }
+
+    const filteredMusic = musicCollection.filter(music => 
+        music.singerName === selectedSinger  // Match the selected singer
+    );
+
+    更新音乐列表(filteredMusic);  // Update the music list with the filtered results
+}
+
+// Filter music by language (Triggered by changing the dropdown value)
+function 过滤语言() {
+    const selectedLanguage = document.getElementById('languageFilterSelect').value;
+
+    const filteredMusic = musicCollection.filter(music => 
+        music.language === selectedLanguage || !selectedLanguage
+    );
+
+    更新音乐列表(filteredMusic);
+}
+
+// Filter music by genre (风格)
+function 过滤风格() {
+    const selectedGenre = document.getElementById('genreFilterSelect').value;
+    const filteredMusic = musicCollection.filter(music => 
+        music.genre === selectedGenre || !selectedGenre
+    );
+
+    更新音乐列表(filteredMusic);
+}
+
 // Fetch the music collection when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     fetchMusicCollection();
@@ -206,7 +230,7 @@ document.getElementById('searchInput').addEventListener('input', 搜索音乐);
 $('#filterSelect').on('change', 过滤歌手);
 
 // Attach event listener for "Filter by Language" dropdown
-document.getElementById('languageFilterSelect').addEventListener('change', 过滤音乐);
+document.getElementById('languageFilterSelect').addEventListener('change', 过滤语言);
 
 // Attach event listener for "Filter by Genre" dropdown
-document.getElementById('genreFilterSelect').addEventListener('change', 过滤音乐);
+document.getElementById('genreFilterSelect').addEventListener('change', 过滤风格);
