@@ -14,7 +14,7 @@ export async function fetchMusicCollection() {
     if (snapshot.exists()) {
         // Populate the music collection array
         musicCollection = Object.entries(snapshot.val()).map(([key, value]) => ({ id: key, ...value }));
-        更新音乐列表();  // Update the music list with fetched data
+        applyFilters();  // Apply filters on page load
         更新歌手筛选();  // Update singer filter dropdown after fetching data
     } else {
         console.log("No data available");
@@ -40,15 +40,36 @@ async function 添加音乐() {
         document.getElementById('languageSelect').value = '';
         document.getElementById('genreSelect').value = '';
 
-        更新音乐列表();
+        applyFilters();
         更新歌手筛选();
     } else {
         console.log("All fields are required");
     }
 }
 
+// Apply the current filters before updating the music list
+function applyFilters() {
+    // Get the current filter selections
+    const selectedLanguage = document.getElementById('languageFilterSelect').value;
+    const selectedGenre = document.getElementById('genreFilterSelect').value;
+
+    // Filter the music list based on the current selections
+    let filteredMusic = musicCollection.filter(music => {
+        // Match language if selected
+        const matchesLanguage = selectedLanguage ? music.language === selectedLanguage : true;
+        // Match genre if selected
+        const matchesGenre = selectedGenre ? music.genre === selectedGenre : true;
+
+        // Only display songs that match both the selected language and genre
+        return matchesLanguage && matchesGenre;
+    });
+
+    // Update the music list based on the current filtered values
+    更新音乐列表(filteredMusic);
+}
+
 // Update music list in the UI
-function 更新音乐列表(filteredCollection = musicCollection) {
+function 更新音乐列表(filteredCollection) {
     const musicList = document.getElementById('musicList');
     const songCountElement = document.getElementById('songCount');  // Get the song count element
     musicList.innerHTML = '';
@@ -119,7 +140,7 @@ async function 更新语言(index, newLanguage) {
     try {
         await update(musicRef, { language: newLanguage });
         musicCollection[index].language = newLanguage;
-        console.log(`Language for "${music.musicName}" updated to: ${newLanguage}`);
+        applyFilters();  // Reapply filters after the update
     } catch (error) {
         console.error("Error updating language:", error);
     }
@@ -133,6 +154,7 @@ async function 更新风格(index, newGenre) {
     try {
         await update(musicRef, { genre: newGenre });
         musicCollection[index].genre = newGenre;
+        applyFilters();  // Reapply filters after the update
     } catch (error) {
         console.error("Error updating genre:", error);
     }
@@ -160,53 +182,8 @@ async function 删除音乐(index) {
     const music = musicCollection[index];
     await remove(ref(database, `musicCollection/${music.id}`));
     musicCollection.splice(index, 1);
-    更新音乐列表();
+    applyFilters();
     更新歌手筛选();
-}
-
-// Search music by name
-function 搜索音乐() {
-    const searchInput = document.getElementById('searchInput').value.toLowerCase();
-    const filteredMusic = musicCollection.filter(music => 
-        music.musicName.toLowerCase().includes(searchInput)
-    );
-    更新音乐列表(filteredMusic);
-}
-
-// Filter music by singer
-function 过滤歌手() {
-    const selectedSinger = $('#filterSelect').val();  // Get the selected singer
-    if (!selectedSinger) {
-        更新音乐列表();  // If no singer is selected, show all songs
-        return;
-    }
-
-    const filteredMusic = musicCollection.filter(music => 
-        music.singerName === selectedSinger  // Match the selected singer
-    );
-
-    更新音乐列表(filteredMusic);  // Update the music list with the filtered results
-}
-
-// Filter music by language (Triggered by changing the dropdown value)
-function 过滤语言() {
-    const selectedLanguage = document.getElementById('languageFilterSelect').value;
-
-    const filteredMusic = musicCollection.filter(music => 
-        music.language === selectedLanguage || !selectedLanguage
-    );
-
-    更新音乐列表(filteredMusic);
-}
-
-// Filter music by genre (风格)
-function 过滤风格() {
-    const selectedGenre = document.getElementById('genreFilterSelect').value;
-    const filteredMusic = musicCollection.filter(music => 
-        music.genre === selectedGenre || !selectedGenre
-    );
-
-    更新音乐列表(filteredMusic);
 }
 
 // Fetch the music collection when the page loads
@@ -224,13 +201,13 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('addMusicButton').addEventListener('click', 添加音乐);
 
 // Attach event listener for "Search by Name"
-document.getElementById('searchInput').addEventListener('input', 搜索音乐);
+document.getElementById('searchInput').addEventListener('input', applyFilters);
 
 // Attach event listener for "Filter by Singer" dropdown (with Select2)
-$('#filterSelect').on('change', 过滤歌手);
+$('#filterSelect').on('change', applyFilters);
 
 // Attach event listener for "Filter by Language" dropdown
-document.getElementById('languageFilterSelect').addEventListener('change', 过滤语言);
+document.getElementById('languageFilterSelect').addEventListener('change', applyFilters);
 
 // Attach event listener for "Filter by Genre" dropdown
-document.getElementById('genreFilterSelect').addEventListener('change', 过滤风格);
+document.getElementById('genreFilterSelect').addEventListener('change', applyFilters);
