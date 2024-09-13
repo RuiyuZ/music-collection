@@ -14,6 +14,7 @@ export async function fetchMusicCollection() {
     if (snapshot.exists()) {
         // Populate the music collection array
         musicCollection = Object.entries(snapshot.val()).map(([key, value]) => ({ id: key, ...value }));
+        console.log("Fetched music collection:", musicCollection);  // Debug: Log fetched data
         applyFilters();  // Apply filters on page load
         更新歌手筛选();  // Update singer filter dropdown after fetching data
     } else {
@@ -34,6 +35,8 @@ async function 添加音乐() {
 
         musicCollection.push({ id: newMusicRef.key, musicName, singerName, language, genre });
 
+        console.log("Added music:", { musicName, singerName, language, genre });  // Debug: Log added music
+
         // Reset input fields
         document.getElementById('musicName').value = '';
         document.getElementById('singerName').value = '';
@@ -43,15 +46,23 @@ async function 添加音乐() {
         applyFilters();
         更新歌手筛选();
     } else {
-        console.log("All fields are required");
+        console.log("All fields are required to add music");  // Debug: Log if any field is missing
     }
 }
 
-// Apply the current filters before updating the music list
+// Apply all filters (search, singer, language, and genre) before updating the music list
 function applyFilters() {
     // Get the current filter selections
     const selectedLanguage = document.getElementById('languageFilterSelect').value;
     const selectedGenre = document.getElementById('genreFilterSelect').value;
+    const searchInput = document.getElementById('searchInput').value.toLowerCase();
+    const selectedSinger = $('#filterSelect').val();
+
+    // Debug: Log the selected filter values
+    console.log("Selected language:", selectedLanguage);
+    console.log("Selected genre:", selectedGenre);
+    console.log("Search query:", searchInput);
+    console.log("Selected singer:", selectedSinger);
 
     // Filter the music list based on the current selections
     let filteredMusic = musicCollection.filter(music => {
@@ -59,10 +70,20 @@ function applyFilters() {
         const matchesLanguage = selectedLanguage ? music.language === selectedLanguage : true;
         // Match genre if selected
         const matchesGenre = selectedGenre ? music.genre === selectedGenre : true;
+        // Match search query by name
+        const matchesSearch = searchInput ? music.musicName.toLowerCase().includes(searchInput) : true;
+        // Match singer if selected
+        const matchesSinger = selectedSinger ? music.singerName === selectedSinger : true;
 
-        // Only display songs that match both the selected language and genre
-        return matchesLanguage && matchesGenre;
+        // Debug: Log the condition for each song
+        console.log(`Song: ${music.musicName}, Language: ${music.language}, Genre: ${music.genre}, Singer: ${music.singerName}, Matches:`, matchesLanguage && matchesGenre && matchesSearch && matchesSinger);
+
+        // Only display songs that match all selected filters
+        return matchesLanguage && matchesGenre && matchesSearch && matchesSinger;
     });
+
+    // Debug: Log the filtered music list
+    console.log("Filtered music list:", filteredMusic);
 
     // Update the music list based on the current filtered values
     更新音乐列表(filteredMusic);
