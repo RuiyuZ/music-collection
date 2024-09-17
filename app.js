@@ -1,101 +1,61 @@
 import { getDatabase, ref, push, set, get, remove, update, child } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
-import { app } from './firebase.js';  // Import the initialized Firebase app
+import { app } from './firebase.js';
 
-// Initialize Firebase Database
 const database = getDatabase(app);
-
 let musicCollection = [];
 
-// Fetch music collection from Firebase
 export async function fetchMusicCollection() {
     const dbRef = ref(database);
     const snapshot = await get(child(dbRef, `musicCollection`));
 
     if (snapshot.exists()) {
-        // Populate the music collection array
         musicCollection = Object.entries(snapshot.val()).map(([key, value]) => ({ id: key, ...value }));
-        console.log("Fetched music collection:", musicCollection);  // Debug: Log fetched data
-        applyFilters();  // Apply filters on page load
-        更新歌手筛选();  // Update singer filter dropdown after fetching data
-    } else {
-        console.log("No data available");
+        applyFilters();
+        更新歌手筛选();
     }
 }
 
-// Add new music and save it to Firebase
 async function 添加音乐() {
     const musicName = document.getElementById('musicName').value;
     const singerName = document.getElementById('singerName').value;
-    const language = document.getElementById('languageSelect').value;  // Capture the selected language
-    const genre = document.getElementById('genreSelect').value;  // Capture the selected genre (风格)
+    const language = document.getElementById('languageSelect').value;
+    const genre = document.getElementById('genreSelect').value;
 
     if (musicName && singerName && language && genre) {
         const newMusicRef = push(ref(database, 'musicCollection'));
         await set(newMusicRef, { musicName, singerName, language, genre });
-
         musicCollection.push({ id: newMusicRef.key, musicName, singerName, language, genre });
-
-        console.log("Added music:", { musicName, singerName, language, genre });  // Debug: Log added music
-
-        // Reset input fields
         document.getElementById('musicName').value = '';
         document.getElementById('singerName').value = '';
         document.getElementById('languageSelect').value = '';
         document.getElementById('genreSelect').value = '';
-
         applyFilters();
         更新歌手筛选();
-    } else {
-        console.log("All fields are required to add music");  // Debug: Log if any field is missing
     }
 }
 
-// Apply all filters (search, singer, language, and genre) before updating the music list
 function applyFilters() {
-    // Get the current filter selections
     const selectedLanguage = document.getElementById('languageFilterSelect').value;
     const selectedGenre = document.getElementById('genreFilterSelect').value;
     const searchInput = document.getElementById('searchInput').value.toLowerCase();
     const selectedSinger = $('#filterSelect').val();
 
-    // Debug: Log the selected filter values
-    console.log("Selected language:", selectedLanguage);
-    console.log("Selected genre:", selectedGenre);
-    console.log("Search query:", searchInput);
-    console.log("Selected singer:", selectedSinger);
-
-    // Filter the music list based on the current selections
     let filteredMusic = musicCollection.filter(music => {
-        // Match language if selected
         const matchesLanguage = selectedLanguage ? music.language === selectedLanguage : true;
-        // Match genre if selected
         const matchesGenre = selectedGenre ? music.genre === selectedGenre : true;
-        // Match search query by name
         const matchesSearch = searchInput ? music.musicName.toLowerCase().includes(searchInput) : true;
-        // Match singer if selected
         const matchesSinger = selectedSinger ? music.singerName === selectedSinger : true;
-
-        // Debug: Log the condition for each song
-        console.log(`Song: ${music.musicName}, Language: ${music.language}, Genre: ${music.genre}, Singer: ${music.singerName}, Matches:`, matchesLanguage && matchesGenre && matchesSearch && matchesSinger);
-
-        // Only display songs that match all selected filters
         return matchesLanguage && matchesGenre && matchesSearch && matchesSinger;
     });
 
-    // Debug: Log the filtered music list
-    console.log("Filtered music list:", filteredMusic);
-
-    // Update the music list based on the current filtered values
     更新音乐列表(filteredMusic);
 }
 
-// Update music list in the UI
 function 更新音乐列表(filteredCollection) {
     const musicList = document.getElementById('musicList');
-    const songCountElement = document.getElementById('songCount');  // Get the song count element
+    const songCountElement = document.getElementById('songCount');
     musicList.innerHTML = '';
 
-    // Update the total song count
     const totalSongs = filteredCollection.length;
     songCountElement.textContent = `总共有 ${totalSongs} 首歌曲`;
 
@@ -136,8 +96,7 @@ function 更新音乐列表(filteredCollection) {
             </td>
             <td><button>删除</button></td>
         `;
-
-        row.querySelector('button').addEventListener('click', () => 删除音乐(index));
+        row.querySelector('button').addEventListener('click', () => 删除音乐(music.id));
 
         row.querySelector(`#languageSelect-${index}`).addEventListener('change', (event) => {
             const selectedLanguage = event.target.value;
@@ -153,7 +112,6 @@ function 更新音乐列表(filteredCollection) {
     });
 }
 
-// Update the language of a song in Firebase
 async function 更新语言(index, newLanguage) {
     const music = musicCollection[index];
     const musicRef = ref(database, `musicCollection/${music.id}`);
@@ -161,13 +119,12 @@ async function 更新语言(index, newLanguage) {
     try {
         await update(musicRef, { language: newLanguage });
         musicCollection[index].language = newLanguage;
-        applyFilters();  // Reapply filters after the update
+        applyFilters();
     } catch (error) {
         console.error("Error updating language:", error);
     }
 }
 
-// Update the genre (风格) of a song in Firebase
 async function 更新风格(index, newGenre) {
     const music = musicCollection[index];
     const musicRef = ref(database, `musicCollection/${music.id}`);
@@ -175,60 +132,41 @@ async function 更新风格(index, newGenre) {
     try {
         await update(musicRef, { genre: newGenre });
         musicCollection[index].genre = newGenre;
-        applyFilters();  // Reapply filters after the update
+        applyFilters();
     } catch (error) {
         console.error("Error updating genre:", error);
     }
 }
 
-// Update singer filter dropdown with Select2
 function 更新歌手筛选() {
     const filterSelect = $('#filterSelect');
-    filterSelect.empty();  // Clear the existing options
-
-    filterSelect.append(new Option('按歌手筛选', ''));  // Add default "select all" option
-
-    const singers = new Set(musicCollection.map(music => music.singerName));  // Get unique singers
+    filterSelect.empty();
+    filterSelect.append(new Option('按歌手筛选', ''));
+    const singers = new Set(musicCollection.map(music => music.singerName));
     singers.forEach(singer => {
         const option = new Option(singer, singer);
         filterSelect.append(option);
     });
-
-    // Refresh the Select2 dropdown
     filterSelect.trigger('change');
 }
 
-// Delete music from Firebase
-async function 删除音乐(index) {
-    const music = musicCollection[index];
-    await remove(ref(database, `musicCollection/${music.id}`));
-    musicCollection.splice(index, 1);
+async function 删除音乐(musicId) {
+    await remove(ref(database, `musicCollection/${musicId}`));
+    musicCollection = musicCollection.filter(music => music.id !== musicId);
     applyFilters();
     更新歌手筛选();
 }
 
-// Fetch the music collection when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     fetchMusicCollection();
-
-    // Initialize Select2 for the singer filter dropdown
     $('#filterSelect').select2({
         placeholder: '按歌手筛选',
         allowClear: true
     });
 });
 
-// Attach event listener for "Add Music" button
 document.getElementById('addMusicButton').addEventListener('click', 添加音乐);
-
-// Attach event listener for "Search by Name"
 document.getElementById('searchInput').addEventListener('input', applyFilters);
-
-// Attach event listener for "Filter by Singer" dropdown (with Select2)
 $('#filterSelect').on('change', applyFilters);
-
-// Attach event listener for "Filter by Language" dropdown
 document.getElementById('languageFilterSelect').addEventListener('change', applyFilters);
-
-// Attach event listener for "Filter by Genre" dropdown
 document.getElementById('genreFilterSelect').addEventListener('change', applyFilters);
