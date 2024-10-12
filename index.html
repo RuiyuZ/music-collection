@@ -6,6 +6,7 @@
     <title>十万嬉皮的歌单</title>
     <!-- Import Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Link to external CSS -->
     <link rel="stylesheet" href="styles.css">
 
     <!-- Include Select2 CSS -->
@@ -16,26 +17,21 @@
 
     <!-- Include Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 </head>
 <body>
     <div class="container">
         <h1>十万嬉皮的歌单</h1>
 
-        <!-- Authentication Buttons -->
-        <div id="authSection">
-            <input type="email" id="emailInput" placeholder="Enter email" />
-            <input type="password" id="passwordInput" placeholder="Enter password" />
-            <button id="loginButton">Login</button>
-            <button id="logoutButton" style="display:none;">Logout</button>
-        </div>
-
         <!-- Total Song Count -->
-        <h3 id="songCount">总共有 0 首歌曲</h3> 
+        <h3 id="songCount">总共有 0 首歌曲</h3> <!-- This element will display the total number of songs -->
 
-        <!-- Add Music Form (visible only to authorized users) -->
-        <div id="musicForm" style="display:none;">
+        <!-- Add Music Form -->
+        <div id="musicForm">
             <input type="text" id="musicName" placeholder="输入音乐名称" />
             <input type="text" id="singerName" placeholder="输入歌手名称" />
+
+            <!-- Language Selection Dropdown -->
             <select id="languageSelect">
                 <option value="">选择歌曲语言</option>
                 <option value="国语">国语</option>
@@ -47,6 +43,8 @@
                 <option value="西班牙语">西班牙语</option>
                 <option value="其他">其他</option>
             </select>
+
+            <!-- New Genre (风格) Dropdown -->
             <select id="genreSelect">
                 <option value="">选择风格</option>
                 <option value="EMO">EMO</option>
@@ -59,15 +57,23 @@
                 <option value="古风">古风</option>
                 <option value="剑网三">剑网三</option>
             </select>
+
+            <!-- Add Music Button -->
             <button id="addMusicButton">添加音乐</button>
         </div>
 
         <!-- Search and Filter Section -->
         <div id="searchFilter">
+            <!-- Search by Music Name -->
             <input type="text" id="searchInput" placeholder="按名称搜索" />
+
+            <!-- Filter by Singer Dropdown with Select2 -->
             <select id="filterSelect" style="width: 100%;">
                 <option value="">按歌手筛选</option>
+                <!-- This will be dynamically populated by JS -->
             </select>
+
+            <!-- Filter by Language Dropdown -->
             <select id="languageFilterSelect">
                 <option value="">按语言筛选</option>
                 <option value="国语">国语</option>
@@ -79,6 +85,8 @@
                 <option value="西班牙语">西班牙语</option>
                 <option value="其他">其他</option>
             </select>
+
+            <!-- Filter by Genre (风格) Dropdown -->
             <select id="genreFilterSelect">
                 <option value="">按风格筛选</option>
                 <option value="EMO">EMO</option>
@@ -104,13 +112,27 @@
                     <th>操作</th>
                 </tr>
             </thead>
-            <tbody id="musicList"></tbody>
+            <tbody id="musicList">
+                <!-- This will be dynamically populated by JS -->
+            </tbody>
         </table>
     </div>
 
     <!-- Firebase Initialization -->
     <script type="module" src="firebase.js"></script>
-    <!-- App JS -->
+
+    <!-- Link to external JavaScript -->
     <script type="module" src="app.js"></script>
+
+    <!-- Initialize Select2 for the singer filter dropdown -->
+    <script>
+        $(document).ready(function() {
+            $('#filterSelect').select2({
+                placeholder: '按歌手筛选',
+                allowClear: true
+            });
+        });
+    </script>
+
 </body>
 </html>
