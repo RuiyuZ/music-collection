@@ -5,7 +5,7 @@ import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https:/
 const database = getDatabase();
 let musicCollection = [];
 let isLoggedIn = false;
-let authorizedUID = 'GHYgtYCyNbW3LTpvJPksN3NsITg1';  // Replace with the actual UID of the authorized user
+let authorizedUIDs = ['GHYgtYCyNbW3LTpvJPksN3NsITg1', 'XLanPhumBGPHAhCpP9oeUiRXnmn1'];  // Add multiple UIDs here
 
 // Elements for login modal
 const loginModal = document.getElementById('loginModal');
@@ -82,8 +82,6 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-
-
 document.getElementById('logoutButton').addEventListener('click', () => {
     signOut(auth).then(() => {
         renderTableHeader(); // Re-render the table header to remove the 操作 column after logout
@@ -97,7 +95,8 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('userDisplay').textContent = `${emailWithoutDomain} 已登陆`;
         document.getElementById('logoutButton').style.display = 'block';
         document.getElementById('loginTriggerButton').style.display = 'none';
-        document.getElementById('musicForm').style.display = user.uid === authorizedUID ? 'block' : 'none';
+        // Check if the user's UID is in the array of authorized UIDs
+        document.getElementById('musicForm').style.display = authorizedUIDs.includes(user.uid) ? 'block' : 'none';
     } else {
         isLoggedIn = false;
         document.getElementById('userDisplay').textContent = '';
@@ -145,7 +144,7 @@ export async function fetchMusicCollection() {
 
 // Add Music (only for authorized users)
 async function addMusic() {
-    if (!isLoggedIn || auth.currentUser.uid !== authorizedUID) return;
+    if (!isLoggedIn || !authorizedUIDs.includes(auth.currentUser.uid)) return;
 
     const musicName = document.getElementById('musicName').value;
     const singerName = document.getElementById('singerName').value;
@@ -198,7 +197,7 @@ function updateMusicList(filteredCollection) {
 
     filteredCollection.forEach((music, index) => {
         const row = document.createElement('tr');
-        const isEditable = isLoggedIn && auth.currentUser.uid === authorizedUID;
+        const isEditable = isLoggedIn && authorizedUIDs.includes(auth.currentUser.uid);
 
         // For non-logged-in users, show plain text for language and genre
         row.innerHTML = `
@@ -272,7 +271,7 @@ async function updateMusicField(musicId, field, value) {
 
 // Delete Music (only for authorized users)
 async function deleteMusic(musicId) {
-    if (!isLoggedIn || auth.currentUser.uid !== authorizedUID) return;
+    if (!isLoggedIn || !authorizedUIDs.includes(auth.currentUser.uid)) return;
     await remove(ref(database, `musicCollection/${musicId}`));
     musicCollection = musicCollection.filter(music => music.id !== musicId);
     applyFilters();
