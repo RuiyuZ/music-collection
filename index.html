@@ -23,11 +23,18 @@
     <div class="container">
         <h1>十万嬉皮的歌单</h1>
 
+        <!-- Authentication Section - Top Right -->
+        <div id="authSection" style="position: absolute; top: 20px; right: 20px;">
+            <span id="userDisplay"></span>
+            <button id="loginTriggerButton">Login</button>
+            <button id="logoutButton" style="display:none;">Logout</button>
+        </div>
+
         <!-- Total Song Count -->
         <h3 id="songCount">总共有 0 首歌曲</h3> <!-- This element will display the total number of songs -->
 
         <!-- Add Music Form -->
-        <div id="musicForm">
+        <div id="musicForm" style="display:none;">
             <input type="text" id="musicName" placeholder="输入音乐名称" />
             <input type="text" id="singerName" placeholder="输入歌手名称" />
 
@@ -44,7 +51,7 @@
                 <option value="其他">其他</option>
             </select>
 
-            <!-- New Genre (风格) Dropdown -->
+            <!-- Genre (风格) Dropdown -->
             <select id="genreSelect">
                 <option value="">选择风格</option>
                 <option value="EMO">EMO</option>
@@ -65,7 +72,7 @@
         <!-- Search and Filter Section -->
         <div id="searchFilter">
             <!-- Search by Music Name -->
-            <input type="text" id="searchInput" placeholder="按名称搜索" />
+            <input type="text" id="searchInput" autocomplete="off" placeholder="按名称搜索" />
 
             <!-- Filter by Singer Dropdown with Select2 -->
             <select id="filterSelect" style="width: 100%;">
@@ -117,6 +124,18 @@
             </tbody>
         </table>
     </div>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Login</h2>
+        <input type="email" id="emailInput" placeholder="Enter your email" required />
+        <input type="password" id="passwordInput" placeholder="Enter your password" required />
+        <button id="loginButton">Login</button>
+        <div id="errorMessage" class="error-message">Invalid email or password. Please try again.</div>
+    </div>
+</div>
 
     <!-- Firebase Initialization -->
     <script type="module" src="firebase.js"></script>

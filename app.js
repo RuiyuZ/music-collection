@@ -1,21 +1,125 @@
 import { getDatabase, ref, push, set, get, remove, update, child } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-database.js";
-import { app } from './firebase.js';
+import { auth } from './firebase.js';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.13.1/firebase-auth.js";
 
-const database = getDatabase(app);
+const database = getDatabase();
 let musicCollection = [];
+let isLoggedIn = false;
+let authorizedUID = 'GHYgtYCyNbW3LTpvJPksN3NsITg1';  // Replace with the actual UID of the authorized user
 
+// Elements for login modal
+const loginModal = document.getElementById('loginModal');
+const loginTriggerButton = document.getElementById('loginTriggerButton');
+const closeButton = document.querySelector('.close-button');
+const errorMessage = document.getElementById('errorMessage');
+
+// Hide modal by default and show only on button click
+loginModal.style.display = 'none';  // Ensure the modal is hidden when the page loads
+
+// Show modal when login button is clicked
+loginTriggerButton.addEventListener('click', () => {
+    loginModal.style.display = 'flex';  // Show the modal when the login button is clicked
+    clearInputs();  // Clear input fields each time the modal opens
+});
+
+// Close modal when 'x' button is clicked
+closeButton.addEventListener('click', () => {
+    loginModal.style.display = 'none';  // Hide the modal when close button is clicked
+});
+
+// Close modal when clicking outside the modal
+window.addEventListener('click', (event) => {
+    if (event.target === loginModal) {
+        loginModal.style.display = 'none';  // Hide the modal when clicking outside
+    }
+});
+
+// Clear input fields
+function clearInputs() {
+    document.getElementById('emailInput').value = '';
+    document.getElementById('passwordInput').value = '';
+    errorMessage.style.display = 'none';  // Hide error message when modal opens
+}
+
+// Authentication Logic for Firebase (handling the login)
+document.getElementById('loginButton').addEventListener('click', () => {
+    const email = document.getElementById('emailInput').value;
+    const password = document.getElementById('passwordInput').value;
+
+    // Use Firebase authentication for login
+    signInWithEmailAndPassword(auth, email, password).then(() => {
+        loginModal.style.display = 'none';  // Close the modal after successful login
+        clearInputs();  // Clear input fields after successful login
+    }).catch((error) => {
+        console.error("Login failed: ", error);
+        errorMessage.style.display = 'block';  // Show error message on login failure
+    });
+});
+
+
+document.getElementById('logoutButton').addEventListener('click', () => {
+    signOut(auth).then(() => {
+        renderTableHeader(); // Re-render the table header to remove the 操作 column after logout
+    }).catch(console.error);
+});
+
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        isLoggedIn = true;
+        const emailWithoutDomain = user.email.split('@')[0];
+        document.getElementById('userDisplay').textContent = `${emailWithoutDomain} is logged in`;
+        document.getElementById('logoutButton').style.display = 'block';
+        document.getElementById('loginTriggerButton').style.display = 'none';
+        document.getElementById('musicForm').style.display = user.uid === authorizedUID ? 'block' : 'none';
+    } else {
+        isLoggedIn = false;
+        document.getElementById('userDisplay').textContent = '';
+        document.getElementById('logoutButton').style.display = 'none';
+        document.getElementById('loginTriggerButton').style.display = 'block';
+        document.getElementById('musicForm').style.display = 'none';
+    }
+    renderTableHeader();  // Re-render the table header based on login state
+    fetchMusicCollection();  // Fetch music whether the user is logged in or not
+});
+
+// Render the Table Header (conditionally show 操作 column)
+function renderTableHeader() {
+    const musicTable = document.getElementById('musicTable');
+    const thead = musicTable.querySelector('thead');
+    thead.innerHTML = `
+        <tr>
+            <th>音乐名称</th>
+            <th>歌手</th>
+            <th>语言</th>
+            <th>风格</th>
+            ${isLoggedIn ? '<th>操作</th>' : ''}
+        </tr>
+    `;
+}
+
+// Fetch Music Collection
 export async function fetchMusicCollection() {
-    const dbRef = ref(database);
-    const snapshot = await get(child(dbRef, `musicCollection`));
+    const dbRef = ref(database, 'musicCollection');  // Correct path to musicCollection
+    const snapshot = await get(dbRef);
 
     if (snapshot.exists()) {
-        musicCollection = Object.entries(snapshot.val()).map(([key, value]) => ({ id: key, ...value }));
+        const data = snapshot.val();
+        musicCollection = Object.entries(data).map(([key, value]) => ({
+            id: key,
+            ...value
+        }));
         applyFilters();
-        更新歌手筛选();
+        updateSingerFilter();
+    } else {
+        console.log("No music data found");
+        document.getElementById('musicList').innerHTML = '';  // Clear the list if no data
     }
 }
 
-async function 添加音乐() {
+// Add Music (only for authorized users)
+async function addMusic() {
+    if (!isLoggedIn || auth.currentUser.uid !== authorizedUID) return;
+
     const musicName = document.getElementById('musicName').value;
     const singerName = document.getElementById('singerName').value;
     const language = document.getElementById('languageSelect').value;
@@ -25,15 +129,20 @@ async function 添加音乐() {
         const newMusicRef = push(ref(database, 'musicCollection'));
         await set(newMusicRef, { musicName, singerName, language, genre });
         musicCollection.push({ id: newMusicRef.key, musicName, singerName, language, genre });
-        document.getElementById('musicName').value = '';
-        document.getElementById('singerName').value = '';
-        document.getElementById('languageSelect').value = '';
-        document.getElementById('genreSelect').value = '';
+        clearForm();
         applyFilters();
-        更新歌手筛选();
+        updateSingerFilter();
     }
 }
 
+function clearForm() {
+    document.getElementById('musicName').value = '';
+    document.getElementById('singerName').value = '';
+    document.getElementById('languageSelect').value = '';
+    document.getElementById('genreSelect').value = '';
+}
+
+// Filter and Update Music List
 function applyFilters() {
     const selectedLanguage = document.getElementById('languageFilterSelect').value;
     const selectedGenre = document.getElementById('genreFilterSelect').value;
@@ -48,10 +157,11 @@ function applyFilters() {
         return matchesLanguage && matchesGenre && matchesSearch && matchesSinger;
     });
 
-    更新音乐列表(filteredMusic);
+    updateMusicList(filteredMusic);
 }
 
-function 更新音乐列表(filteredCollection) {
+// Update Music List in the DOM
+function updateMusicList(filteredCollection) {
     const musicList = document.getElementById('musicList');
     const songCountElement = document.getElementById('songCount');
     musicList.innerHTML = '';
@@ -60,85 +170,89 @@ function 更新音乐列表(filteredCollection) {
     songCountElement.textContent = `总共有 ${totalSongs} 首歌曲`;
 
     filteredCollection.forEach((music, index) => {
-        const language = music.language ? music.language : "请选择";
-        const genre = music.genre ? music.genre : "请选择";
-
         const row = document.createElement('tr');
+        const isEditable = isLoggedIn && auth.currentUser.uid === authorizedUID;
+
+        // For non-logged-in users, show plain text for language and genre
         row.innerHTML = `
             <td>${music.musicName}</td>
             <td>${music.singerName}</td>
             <td>
+                ${isEditable ? `
                 <select id="languageSelect-${index}" data-index="${index}">
-                    <option value="">请选择</option>
-                    <option value="国语" ${language === '国语' ? 'selected' : ''}>国语</option>
-                    <option value="粤语" ${language === '粤语' ? 'selected' : ''}>粤语</option>
-                    <option value="英语" ${language === '英语' ? 'selected' : ''}>英语</option>
-                    <option value="日语" ${language === '日语' ? 'selected' : ''}>日语</option>
-                    <option value="韩语" ${language === '韩语' ? 'selected' : ''}>韩语</option>
-                    <option value="法语" ${language === '法语' ? 'selected' : ''}>法语</option>
-                    <option value="西班牙语" ${language === '西班牙语' ? 'selected' : ''}>西班牙语</option>
-                    <option value="其他" ${language === '其他' ? 'selected' : ''}>其他</option>
+                    <option value="国语" ${music.language === '国语' ? 'selected' : ''}>国语</option>
+                    <option value="粤语" ${music.language === '粤语' ? 'selected' : ''}>粤语</option>
+                    <option value="英语" ${music.language === '英语' ? 'selected' : ''}>英语</option>
+                    <option value="日语" ${music.language === '日语' ? 'selected' : ''}>日语</option>
+                    <option value="韩语" ${music.language === '韩语' ? 'selected' : ''}>韩语</option>
+                    <option value="法语" ${music.language === '法语' ? 'selected' : ''}>法语</option>
+                    <option value="西班牙语" ${music.language === '西班牙语' ? 'selected' : ''}>西班牙语</option>
+                    <option value="其他" ${music.language === '其他' ? 'selected' : ''}>其他</option>
                 </select>
+                ` : music.language || 'N/A'}
             </td>
             <td>
+                ${isEditable ? `
                 <select id="genreSelect-${index}" data-index="${index}">
-                    <option value="">请选择</option>
-                    <option value="EMO" ${genre === 'EMO' ? 'selected' : ''}>EMO</option>
-                    <option value="流行" ${genre === '流行' ? 'selected' : ''}>流行</option>
-                    <option value="搞怪" ${genre === '搞怪' ? 'selected' : ''}>搞怪</option>
-                    <option value="动漫" ${genre === '动漫' ? 'selected' : ''}>动漫</option>
-                    <option value="戏曲" ${genre === '戏曲' ? 'selected' : ''}>戏曲</option>
-                    <option value="抒情" ${genre === '抒情' ? 'selected' : ''}>抒情</option>
-                    <option value="说唱" ${genre === '说唱' ? 'selected' : ''}>说唱</option>
-                    <option value="古风" ${genre === '古风' ? 'selected' : ''}>古风</option>
-                    <option value="剑网三" ${genre === '剑网三' ? 'selected' : ''}>剑网三</option>
+                    <option value="EMO" ${music.genre === 'EMO' ? 'selected' : ''}>EMO</option>
+                    <option value="流行" ${music.genre === '流行' ? 'selected' : ''}>流行</option>
+                    <option value="搞怪" ${music.genre === '搞怪' ? 'selected' : ''}>搞怪</option>
+                    <option value="动漫" ${music.genre === '动漫' ? 'selected' : ''}>动漫</option>
+                    <option value="戏曲" ${music.genre === '戏曲' ? 'selected' : ''}>戏曲</option>
+                    <option value="抒情" ${music.genre === '抒情' ? 'selected' : ''}>抒情</option>
+                    <option value="说唱" ${music.genre === '说唱' ? 'selected' : ''}>说唱</option>
+                    <option value="古风" ${music.genre === '古风' ? 'selected' : ''}>古风</option>
+                    <option value="剑网三" ${music.genre === '剑网三' ? 'selected' : ''}>剑网三</option>
                 </select>
+                ` : music.genre || 'N/A'}
             </td>
-            <td><button>删除</button></td>
+            ${isEditable ? `<td><button class="delete-button">删除</button></td>` : ''}
         `;
-        row.querySelector('button').addEventListener('click', () => 删除音乐(music.id));
 
-        row.querySelector(`#languageSelect-${index}`).addEventListener('change', (event) => {
-            const selectedLanguage = event.target.value;
-            更新语言(index, selectedLanguage);
-        });
+        // If the user is logged in and authorized, attach event listeners to update language and genre
+        if (isEditable) {
+            row.querySelector(`#languageSelect-${index}`).addEventListener('change', (event) => {
+                const selectedLanguage = event.target.value;
+                updateMusicField(music.id, 'language', selectedLanguage);
+            });
 
-        row.querySelector(`#genreSelect-${index}`).addEventListener('change', (event) => {
-            const selectedGenre = event.target.value;
-            更新风格(index, selectedGenre);
-        });
+            row.querySelector(`#genreSelect-${index}`).addEventListener('change', (event) => {
+                const selectedGenre = event.target.value;
+                updateMusicField(music.id, 'genre', selectedGenre);
+            });
+
+            // Add event listener for the delete button
+            const deleteButton = row.querySelector('.delete-button');
+            deleteButton.addEventListener('click', () => deleteMusic(music.id));
+        }
 
         musicList.appendChild(row);
     });
 }
 
-async function 更新语言(index, newLanguage) {
-    const music = musicCollection[index];
-    const musicRef = ref(database, `musicCollection/${music.id}`);
-    
+
+// Update language or genre in Firebase
+async function updateMusicField(musicId, field, value) {
+    const musicRef = ref(database, `musicCollection/${musicId}`);
     try {
-        await update(musicRef, { language: newLanguage });
-        musicCollection[index].language = newLanguage;
+        await update(musicRef, { [field]: value });
+        musicCollection = musicCollection.map(music => music.id === musicId ? { ...music, [field]: value } : music);
         applyFilters();
     } catch (error) {
-        console.error("Error updating language:", error);
+        console.error(`Error updating ${field}:`, error);
     }
 }
 
-async function 更新风格(index, newGenre) {
-    const music = musicCollection[index];
-    const musicRef = ref(database, `musicCollection/${music.id}`);
-    
-    try {
-        await update(musicRef, { genre: newGenre });
-        musicCollection[index].genre = newGenre;
-        applyFilters();
-    } catch (error) {
-        console.error("Error updating genre:", error);
-    }
+// Delete Music (only for authorized users)
+async function deleteMusic(musicId) {
+    if (!isLoggedIn || auth.currentUser.uid !== authorizedUID) return;
+    await remove(ref(database, `musicCollection/${musicId}`));
+    musicCollection = musicCollection.filter(music => music.id !== musicId);
+    applyFilters();
+    updateSingerFilter();
 }
 
-function 更新歌手筛选() {
+function updateSingerFilter() {
     const filterSelect = $('#filterSelect');
     filterSelect.empty();
     filterSelect.append(new Option('按歌手筛选', ''));
@@ -150,23 +264,19 @@ function 更新歌手筛选() {
     filterSelect.trigger('change');
 }
 
-async function 删除音乐(musicId) {
-    await remove(ref(database, `musicCollection/${musicId}`));
-    musicCollection = musicCollection.filter(music => music.id !== musicId);
-    applyFilters();
-    更新歌手筛选();
-}
+// Event Listeners
+document.getElementById('addMusicButton').addEventListener('click', addMusic);
+document.getElementById('searchInput').addEventListener('input', applyFilters);
+$('#filterSelect').on('change', applyFilters);
+document.getElementById('languageFilterSelect').addEventListener('change', applyFilters);
+document.getElementById('genreFilterSelect').addEventListener('change', applyFilters);
 
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
+    renderTableHeader();  // Initial render of the table header
     fetchMusicCollection();
     $('#filterSelect').select2({
         placeholder: '按歌手筛选',
         allowClear: true
     });
 });
-
-document.getElementById('addMusicButton').addEventListener('click', 添加音乐);
-document.getElementById('searchInput').addEventListener('input', applyFilters);
-$('#filterSelect').on('change', applyFilters);
-document.getElementById('languageFilterSelect').addEventListener('change', applyFilters);
-document.getElementById('genreFilterSelect').addEventListener('change', applyFilters);
