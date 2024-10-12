@@ -26,9 +26,10 @@
         <!-- Authentication Section - Top Right -->
         <div id="authSection" style="position: absolute; top: 20px; right: 20px;">
             <span id="userDisplay"></span>
-            <button id="loginTriggerButton">Login</button>
-            <button id="logoutButton" style="display:none;">Logout</button>
+            <button id="loginTriggerButton">登录</button> <!-- Changed "Login" to "登录" -->
+            <button id="logoutButton" style="display:none;">登出</button> <!-- Changed "Logout" to "登出" -->
         </div>
+
 
         <!-- Total Song Count -->
         <h3 id="songCount">总共有 0 首歌曲</h3> <!-- This element will display the total number of songs -->
@@ -125,17 +126,18 @@
         </table>
     </div>
 
-<!-- Login Modal -->
-<div id="loginModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button">&times;</span>
-        <h2>Login</h2>
-        <input type="email" id="emailInput" placeholder="Enter your email" required />
-        <input type="password" id="passwordInput" placeholder="Enter your password" required />
-        <button id="loginButton">Login</button>
-        <div id="errorMessage" class="error-message">Invalid email or password. Please try again.</div>
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>登录</h2> <!-- Changed "Login" to "登录" -->
+            <input type="email" id="emailInput" placeholder="输入您的邮箱" required /> <!-- Changed placeholder to Chinese -->
+            <input type="password" id="passwordInput" placeholder="输入您的密码" required /> <!-- Changed placeholder to Chinese -->
+            <button id="loginButton">登录</button> <!-- Changed "Login" to "登录" -->
+            <div id="errorMessage" class="error-message">邮箱或密码无效。请再试一次。</div> <!-- Changed error message to Chinese -->
+        </div>
     </div>
-</div>
+
 
     <!-- Firebase Initialization -->
     <script type="module" src="firebase.js"></script>

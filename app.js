@@ -12,6 +12,7 @@ const loginModal = document.getElementById('loginModal');
 const loginTriggerButton = document.getElementById('loginTriggerButton');
 const closeButton = document.querySelector('.close-button');
 const errorMessage = document.getElementById('errorMessage');
+const loginButton = document.getElementById('loginButton');
 
 // Hide modal by default and show only on button click
 loginModal.style.display = 'none';  // Ensure the modal is hidden when the page loads
@@ -20,6 +21,7 @@ loginModal.style.display = 'none';  // Ensure the modal is hidden when the page 
 loginTriggerButton.addEventListener('click', () => {
     loginModal.style.display = 'flex';  // Show the modal when the login button is clicked
     clearInputs();  // Clear input fields each time the modal opens
+    document.getElementById('emailInput').focus();  // Automatically focus on email input
 });
 
 // Close modal when 'x' button is clicked
@@ -39,22 +41,47 @@ function clearInputs() {
     document.getElementById('emailInput').value = '';
     document.getElementById('passwordInput').value = '';
     errorMessage.style.display = 'none';  // Hide error message when modal opens
+    loginButton.disabled = false;  // Re-enable login button
 }
 
 // Authentication Logic for Firebase (handling the login)
-document.getElementById('loginButton').addEventListener('click', () => {
+function handleLogin() {
     const email = document.getElementById('emailInput').value;
     const password = document.getElementById('passwordInput').value;
 
+    if (!email || !password) {
+        errorMessage.textContent = "Both fields are required.";
+        errorMessage.style.display = 'block';
+        return;
+    }
+
+    // Disable the login button while processing
+    loginButton.disabled = true;
+
     // Use Firebase authentication for login
-    signInWithEmailAndPassword(auth, email, password).then(() => {
-        loginModal.style.display = 'none';  // Close the modal after successful login
-        clearInputs();  // Clear input fields after successful login
-    }).catch((error) => {
-        console.error("Login failed: ", error);
-        errorMessage.style.display = 'block';  // Show error message on login failure
-    });
+    signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+            loginModal.style.display = 'none';  // Close the modal after successful login
+            clearInputs();  // Clear input fields after successful login
+        })
+        .catch((error) => {
+            console.error("Login failed: ", error);
+            errorMessage.textContent = "Invalid email or password. Please try again.";
+            errorMessage.style.display = 'block';  // Show error message on login failure
+            loginButton.disabled = false;  // Re-enable login button on error
+        });
+}
+
+// Attach event listener for button click
+loginButton.addEventListener('click', handleLogin);
+
+// Allow form submission with Enter key
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' && loginModal.style.display === 'flex') {
+        handleLogin();
+    }
 });
+
 
 
 document.getElementById('logoutButton').addEventListener('click', () => {
@@ -67,7 +94,7 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         isLoggedIn = true;
         const emailWithoutDomain = user.email.split('@')[0];
-        document.getElementById('userDisplay').textContent = `${emailWithoutDomain} is logged in`;
+        document.getElementById('userDisplay').textContent = `${emailWithoutDomain} 已登陆`;
         document.getElementById('logoutButton').style.display = 'block';
         document.getElementById('loginTriggerButton').style.display = 'none';
         document.getElementById('musicForm').style.display = user.uid === authorizedUID ? 'block' : 'none';
